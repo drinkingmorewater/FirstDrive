@@ -70,7 +70,7 @@ export const vehicles: VehicleProfile[] = [
 ]
 
 export const demoState: AppState = {
-  user: { id: 'demo-user', name: 'Demo User', city: '北京', drivingYears: 12, actualDrivingFrequency: '很少实际驾驶', preferredDrivingTime: '白天', vehicleId: 'v1' },
+  user: { id: 'demo-user', name: '林澈', city: '上海', drivingYears: 12, actualDrivingFrequency: '很少实际驾驶', preferredDrivingTime: '白天', vehicleId: 'v1', assistanceLevel: 'guided' },
   familiarity: {
     cityRoad: 'familiar', heavyTraffic: 'completed_independently', expressway: 'want_to_prepare',
     elevatedRoad: 'unexperienced', highway: 'accompanied', mountainRoad: 'unexperienced', narrowRoad: 'want_to_prepare',
@@ -79,7 +79,10 @@ export const demoState: AppState = {
     fueling: 'familiar', charging: 'unexperienced',
   },
   vehicle: vehicles[0],
-  journey: { origin: '家', destination: '医院', departureTime: '明天 08:00', weather: '晴', routeOptions, selectedRoute: null, rehearsalPoints, completionStatus: 'draft' },
-  memory: { completedScenarios: ['城市普通道路', '停车', '加油'], journeys: [{ route: '家 → 商场', date: '2026/08/10 18:20', distance: 18, duration: 38 }], vehicles: ['丰田 锋兰达 2.0L'], maintenance: ['上次保养 45 天前'], expenses: [] },
+  journey: { origin: '家', destination: '浦东嘉里医院', departureTime: '今天 08:00', weather: '小雨', routeOptions, selectedRoute: null, rehearsalPoints, completionStatus: 'draft' },
+  memory: { completedScenarios: ['城市普通道路', '停车', '加油'], journeys: [{ route: '家 → 商场', date: '2026/08/10 18:20', distance: 18, duration: 38 }], vehicles: ['丰田 锋兰达 2.0L'], maintenance: ['上次保养 45 天前'], expenses: [], confidence: 62 },
   mockMode: true,
+  agentEvents: [],
+  proactiveEvents: [],
+  liveContext: { progress: 0, speed: 68, distanceRemaining: 24, etaMinutes: 36, weather: '小雨', fuel: 42, currentRoad: '晨昌路', nextManeuver: '进入北辰西路高架', nextManeuverDistance: 8, routeVersion: 1, paused: false },
 }

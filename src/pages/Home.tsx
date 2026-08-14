@@ -1,71 +1,68 @@
-import { ArrowRight, CarFront, CircleHelp, Map, Navigation, RotateCcw, Route } from 'lucide-react'
+import { ArrowRight, CarFront, HelpCircle, Mic, Navigation, ShieldCheck, Sparkles, UserRound } from 'lucide-react'
+import { FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { AppShell } from '../components/AppShell'
+import { MobilityMap } from '../components/MobilityMap'
 import { useAppState } from '../state/AppState'
 
-const actions = [
-  { to: '/trip/new', label: '我要出发', icon: Navigation, primary: true },
-  { to: '/familiarity', label: '我想先熟悉一下', icon: Map },
-  { to: '/buy', label: '我要买车', icon: CarFront },
-  { to: '/emergency', label: '我遇到问题了', icon: CircleHelp },
+const layers = [
+  { to: '/familiarity', en: 'KNOW ME', zh: '认识我', copy: '熟悉度与辅助偏好', icon: UserRound },
+  { to: '/buy', en: 'BUY SMART', zh: '聪明买', copy: '适配生活，而非参数竞赛', icon: CarFront },
+  { to: '/trip/new', en: 'DRIVE SAFE', zh: '准备好', copy: '路线预演与出发检查', icon: ShieldCheck },
+  { to: '/trip/drive', en: 'ON THE ROAD', zh: '在路上', copy: '实时理解，主动协助', icon: Navigation },
+  { to: '/help', en: 'HELP ME', zh: '帮帮我', copy: '事故、维修、租车与海外', icon: HelpCircle },
 ]
 
 export function Home() {
   const navigate = useNavigate()
-  const { state, resetDemo } = useAppState()
+  const { state, resetDemo, patchJourney, clearRuntime } = useAppState()
+  const [destination, setDestination] = useState('浦东嘉里医院')
 
-  const loadDemo = () => {
+  const start = (event: FormEvent) => {
+    event.preventDefault()
     resetDemo()
+    clearRuntime()
+    patchJourney({ destination: destination.trim() || '浦东嘉里医院', completionStatus: 'draft', selectedRoute: null })
     navigate('/trip/new')
   }
 
   return (
     <AppShell>
-      <section className="home-hero">
-        <motion.div className="home-copy" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .55 }}>
-          <h1>每个人，都有<br />自己的第一公里。</h1>
-          <p>从第一次买车，到第一次独自出发，FirstDrive 认识你、车、路与此刻的环境。</p>
-          <div className="home-actions">
-            {actions.map(({ to, label, icon: Icon, primary }) => (
-              <Link key={to} to={to} className={primary ? 'home-action primary' : 'home-action'}><Icon size={19} />{label}</Link>
-            ))}
+      <section className="home-v3">
+        <div className="home-intro">
+          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
+            <span className="eyebrow"><Sparkles size={16} /> CALM MOBILITY OS</span>
+            <h1>今天，<br />你准备去哪里？</h1>
+            <p>FirstDrive 认识你、车、路与此刻的环境。在你需要前准备，在你紧张时少打扰。</p>
+          </motion.div>
+          <form className="command-bar" onSubmit={start}>
+            <Navigation size={20} />
+            <label><span>目的地</span><input value={destination} onChange={event => setDestination(event.target.value)} aria-label="目的地" /></label>
+            <button type="button" className="command-mic" onClick={() => setDestination('浦东嘉里医院')} aria-label="语音输入目的地"><Mic /></button>
+            <button className="command-go" aria-label="开始规划"><ArrowRight /></button>
+          </form>
+          <div className="home-memory-line">
+            <span>为 {state.user.name} 准备</span><b>快速路希望先了解</b><b>高架尚未独立完成</b><b>偏好提前提醒</b>
           </div>
-          <button className="hero-cta" onClick={loadDemo}>载入示例用户，开始出发 <ArrowRight size={19} /></button>
-          <span className="demo-note"><RotateCcw size={14} /> 一键重置并载入完整演示数据</span>
-        </motion.div>
-        <motion.div className="hero-route" initial={{ opacity: 0, scale: .98 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: .7, delay: .1 }}>
-          <svg viewBox="0 0 680 520" aria-hidden="true">
-            <path className="hero-map-line faint" d="M70 480 C170 420 150 335 265 310 S310 210 430 190 S485 90 610 40" />
-            <path className="hero-map-line main" d="M70 480 C170 420 150 335 265 310 S310 210 430 190 S485 90 610 40" />
-            <circle cx="70" cy="480" r="13" className="hero-node start" />
-            <circle cx="265" cy="310" r="9" className="hero-node" />
-            <circle cx="430" cy="190" r="9" className="hero-node" />
-            <circle cx="610" cy="40" r="14" className="hero-node end" />
-          </svg>
-          <span className="route-tag tag-start">起点</span>
-          <span className="route-tag tag-familiar"><b>路况熟悉</b><small>城市道路 · 畅通</small></span>
-          <span className="route-tag tag-express"><b>快速路段</b><small>预计 23 分钟</small></span>
-          <span className="route-tag tag-complex"><b>复杂立交</b><small>预计 8 分钟</small></span>
-          <span className="route-tag tag-end">目的地</span>
-        </motion.div>
+        </div>
+
+        <div className="home-canvas">
+          <MobilityMap />
+          <div className="journey-preview">
+            <span>NEXT JOURNEY</span><strong>家 → {state.journey.destination}</strong>
+            <p>24 km · 小雨 · 预计 36 分钟</p>
+          </div>
+        </div>
       </section>
 
-      <section className="home-summary">
-        <Link to="/garage" className="summary-column">
-          <span className="summary-kicker">我的车</span>
-          <div className="vehicle-silhouette"><CarFront size={44} /></div>
-          <div><strong>{state.vehicle.brand} {state.vehicle.model}</strong><small>紧凑型 · 汽油 · 上次保养 45 天前</small></div><ArrowRight size={17} />
-        </Link>
-        <Link to="/familiarity" className="summary-column familiarity-summary">
-          <span className="summary-kicker">驾驶熟悉度</span>
-          <div><b className="text-familiar">城市普通道路 · 已熟悉</b><b className="text-prepare">快速路 · 希望先了解</b><b>高架 · 未经历</b></div><ArrowRight size={17} />
-        </Link>
-        <Link to="/memory" className="summary-column">
-          <span className="summary-kicker">最近旅程</span>
-          <Route size={34} />
-          <div><strong>家 → 商场</strong><small>2026/08/10 18:20 · 18 km · 38 分钟</small></div><ArrowRight size={17} />
-        </Link>
+      <section className="layer-rail" aria-label="五层汽车生活工作区">
+        {layers.map(({ to, en, zh, copy, icon: Icon }, index) => (
+          <Link to={to} key={to} className={index === 3 ? 'active-layer' : ''}>
+            <span className="layer-index">0{index + 1}</span><Icon />
+            <div><small>{en}</small><strong>{zh}</strong><p>{copy}</p></div><ArrowRight size={17} />
+          </Link>
+        ))}
       </section>
     </AppShell>
   )

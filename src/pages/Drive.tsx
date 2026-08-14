@@ -1,45 +1,88 @@
-import { AlertTriangle, ArrowRight, Check, MapPin, Pause, Play, ShieldAlert } from 'lucide-react'
-import { useState } from 'react'
+import { AlertTriangle, Fuel, HelpCircle, Mic, Navigation, Pause, Play, Route, Volume2 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AgentActivity } from '../components/AgentActivity'
 import { Brand } from '../components/Brand'
+import { MobilityMap } from '../components/MobilityMap'
+import { VoiceDock } from '../components/VoiceDock'
+import { runReplanningSequence } from '../agents'
+import { LiveDriveEngine } from '../live'
 import { useAppState } from '../state/AppState'
-
-const alerts = [
-  { main: '500 m 后进入快速路，保持当前车道。', sub: '约 1 分钟后' },
-  { main: '2 km 后进入高架，提前保持右侧车道。', sub: '约 3 分钟后' },
-  { main: '即将到达医院北门，减速留意行人。', sub: '约 2 分钟后' },
-]
+import type { LiveDriveContext, ProactiveEvent } from '../types'
 
 export function Drive() {
   const navigate = useNavigate()
-  const { state } = useAppState()
-  const [step, setStep] = useState(0)
+  const { state, patchLiveContext, emitProactiveEvent, emitAgentEvent, patchJourney } = useAppState()
+  const [context, setContext] = useState(state.liveContext)
+  const [voiceOpen, setVoiceOpen] = useState(false)
   const [paused, setPaused] = useState(false)
-  const points = state.journey.rehearsalPoints
+  const [activeEvent, setActiveEvent] = useState<ProactiveEvent | null>(null)
+  const engine = useRef<LiveDriveEngine | null>(null)
+  const replanned = useRef(context.routeVersion === 2)
+  const arrivalTimer = useRef<number | null>(null)
 
-  const advance = () => {
-    if (step === alerts.length - 1) navigate('/trip/complete')
-    else setStep(value => value + 1)
+  useEffect(() => {
+    engine.current = new LiveDriveEngine(context, (next, events) => {
+      setContext(next)
+      patchLiveContext(next)
+      events.forEach(event => {
+        emitProactiveEvent(event)
+        setActiveEvent(event)
+        emitAgentEvent({ agent: 'road', status: event.severity === 'warning' ? 'attention' : 'running', title: event.title, detail: event.detail, source: event.type })
+      })
+      if (next.routeVersion === 2 && !replanned.current) {
+        replanned.current = true
+        runReplanningSequence(state, next, emitAgentEvent)
+      }
+      if (next.progress >= 100 && arrivalTimer.current === null) {
+        patchJourney({ completionStatus: 'completed' })
+        arrivalTimer.current = window.setTimeout(() => navigate('/trip/complete'), 2200)
+      }
+    })
+    engine.current.start()
+    return () => {
+      engine.current?.stop()
+      if (arrivalTimer.current) window.clearTimeout(arrivalTimer.current)
+    }
+  }, [])
+
+  const togglePause = () => {
+    const next = !paused
+    setPaused(next)
+    engine.current?.setPaused(next)
   }
 
   return (
-    <div className="drive-page">
-      <header><Brand inverse /><h2>从家到医院</h2><span><i />{paused ? '已暂停' : '驾驶中'} · Demo Simulation</span></header>
-      <main>
-        <AnimatePresence mode="wait"><motion.section key={step} className="drive-alert" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }}><h1>{paused ? '已暂停。请在安全位置继续。' : alerts[step].main}</h1><p>{paused ? '当前路线进度已保留' : alerts[step].sub}</p></motion.section></AnimatePresence>
-        <span className="next-key">下一个关键节点</span>
-        <div className="drive-progress">
-          {points.map((point, index) => <div key={point.id} className={index < step ? 'done' : index === step ? 'active' : ''}><span>{index < step ? <Check size={18} /> : index === step ? <MapPin size={20} /> : null}</span><b>{point.title.replace('第一次进入', '').replace('停车入口', '')}</b><small>{index < step ? '已完成' : index === step ? '即将到达' : `约 ${index === 2 ? 16 : 8} 分钟`}</small></div>)}
-        </div>
-        <p className="drive-eta">预计 <strong>08:46</strong> 到达</p>
+    <div className="live-drive">
+      <header className="drive-topbar">
+        <Brand inverse /><div className="drive-status"><span>08:51</span><b>D</b><strong>READY</strong><em>{context.speed} <small>km/h</small></em></div><div><Fuel />{context.fuel}%<span>5G</span><span>22°C</span></div>
+      </header>
+      <main className="drive-cockpit">
+        <section className="drive-map-stage">
+          <MobilityMap progress={context.progress} dark />
+          <div className="maneuver-card"><Navigation /><div><small>{context.nextManeuverDistance} km 后</small><strong>{context.nextManeuver}</strong><span>{context.distanceRemaining} km · 预计 {context.etaMinutes} 分钟</span></div></div>
+          {activeEvent ? <div className={'proactive-alert ' + activeEvent.severity}><AlertTriangle /><div><strong>{activeEvent.title}</strong><span>{activeEvent.detail}</span></div><button onClick={() => setActiveEvent(null)}>知道了</button></div> : null}
+          {context.routeVersion === 2 ? <div className="plan-updated">
+            <span>PLAN UPDATED</span><div><small>原计划</small><strong>36<em> min</em></strong></div><i>→</i><div><small>新计划</small><strong>41<em> min</em></strong></div><p>更新原因<b>避开高复杂度立交 + 强降雨区域</b></p>
+          </div> : null}
+          <div className="progress-strip"><i style={{ width: context.progress + '%' }} /><span>{Math.round(context.progress)}%</span></div>
+        </section>
+        <aside className="drive-context-rail">
+          <header><span>LIVE CONTEXT</span><b><i /> 2s</b></header>
+          <div className="context-cell"><small>人 · ME</small><strong>{context.progress > 62 ? '状态稳定' : '高架未独立完成'}</strong><span>辅助级别：提前提醒</span></div>
+          <div className="context-cell"><small>车 · VEHICLE</small><strong>Fuel {context.fuel}%</strong><span>{state.vehicle.model} · 状态正常</span></div>
+          <div className="context-cell"><small>路 · ROAD</small><strong>{context.currentRoad}</strong><span>{context.nextManeuverDistance} km 后关键节点</span></div>
+          <div className="context-cell"><small>境 · ENVIRONMENT</small><strong>{context.weather}</strong><span>{context.weather === '强降雨' ? '能见度下降 · 路面湿滑' : '降雨可控 · 路面湿滑'}</span></div>
+          <AgentActivity dark />
+        </aside>
       </main>
-      <footer>
-        <button onClick={() => setPaused(value => !value)}>{paused ? <Play /> : <Pause />} {paused ? '继续' : '暂停'}</button>
-        <button className="emergency-drive" onClick={() => navigate('/emergency')}><ShieldAlert /> 紧急求助</button>
-        <button className="advance-drive" onClick={advance}>{step === alerts.length - 1 ? '到达目的地' : '完成当前路段'} <ArrowRight /></button>
-        <p><AlertTriangle size={16} /> 请仅在安全停车后进行复杂操作。</p>
+      <footer className="drive-controls">
+        <button onClick={togglePause}>{paused ? <Play /> : <Pause />}<span>{paused ? '继续' : '暂停'}</span></button>
+        <button className="voice-control" onClick={() => setVoiceOpen(true)}><Mic /><span>问 FirstDrive</span><Volume2 /></button>
+        <button onClick={() => navigate('/help')}><HelpCircle /><span>道路帮助</span></button>
+        <div><Route /><span>{context.distanceRemaining} km</span><strong>预计 {context.etaMinutes} 分钟</strong></div>
       </footer>
+      <VoiceDock open={voiceOpen} onClose={() => setVoiceOpen(false)} driveMode />
     </div>
   )
 }

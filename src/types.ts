@@ -11,6 +11,19 @@ export type FamiliarityKey =
   | 'snowDriving' | 'parking' | 'reverseParking' | 'complexLaneChange'
   | 'highwayMerge' | 'fueling' | 'charging'
 
+export type AgentId = 'me' | 'buy' | 'ready' | 'road' | 'help'
+export type AgentEventStatus = 'queued' | 'running' | 'completed' | 'attention'
+
+export interface AgentEvent {
+  id: string
+  agent: AgentId
+  status: AgentEventStatus
+  title: string
+  detail: string
+  timestamp: number
+  source?: string
+}
+
 export interface UserProfile {
   id: string
   name: string
@@ -19,6 +32,7 @@ export interface UserProfile {
   actualDrivingFrequency: string
   preferredDrivingTime: string
   vehicleId: string
+  assistanceLevel: 'quiet' | 'balanced' | 'guided'
 }
 
 export type FamiliarityProfile = Record<FamiliarityKey, FamiliarityStatus>
@@ -39,10 +53,7 @@ export interface VehicleProfile {
   price: number
 }
 
-export interface RouteFactor {
-  label: string
-  tone: 'risk' | 'caution' | 'familiar' | 'neutral'
-}
+export interface RouteFactor { label: string; tone: 'risk' | 'caution' | 'familiar' | 'neutral' }
 
 export interface RouteOption {
   id: 'A' | 'B'
@@ -87,7 +98,37 @@ export interface DriveMemory {
   vehicles: string[]
   maintenance: string[]
   expenses: number[]
+  confidence: number
 }
+
+export type ProactiveEventType =
+  | 'weather_change' | 'complex_road_ahead' | 'energy_low' | 'service_area_ahead'
+  | 'unfamiliar_segment' | 'fatigue_threshold' | 'destination_arrival'
+
+export interface ProactiveEvent {
+  id: string
+  type: ProactiveEventType
+  title: string
+  detail: string
+  severity: 'info' | 'warning' | 'critical'
+  atProgress: number
+}
+
+export interface LiveDriveContext {
+  progress: number
+  speed: number
+  distanceRemaining: number
+  etaMinutes: number
+  weather: '晴' | '小雨' | '强降雨'
+  fuel: number
+  currentRoad: string
+  nextManeuver: string
+  nextManeuverDistance: number
+  routeVersion: 1 | 2
+  paused: boolean
+}
+
+export type VoiceStage = 'idle' | 'listening' | 'understanding' | 'working' | 'speaking'
 
 export interface AppState {
   user: UserProfile
@@ -96,4 +137,7 @@ export interface AppState {
   journey: Journey
   memory: DriveMemory
   mockMode: boolean
+  agentEvents: AgentEvent[]
+  proactiveEvents: ProactiveEvent[]
+  liveContext: LiveDriveContext
 }

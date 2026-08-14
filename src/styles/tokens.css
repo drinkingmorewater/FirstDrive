@@ -1,0 +1,32 @@
+:root {
+  --canvas: #F4F6F8;
+  --surface: #FFFFFF;
+  --ink: #0A0E14;
+  --secondary: #65707C;
+  --muted: #8A95A1;
+  --hairline: #DDE2E7;
+  --hairline-strong: #CAD1D8;
+  --accent: #5B7CFA;
+  --accent-strong: #3E66F5;
+  --accent-soft: #EAF0FF;
+  --success: #2FA67C;
+  --success-soft: #E8F6F0;
+  --warning: #D89B3C;
+  --warning-soft: #FFF6E5;
+  --critical: #D95563;
+  --critical-soft: #FFF0F2;
+  --drive-bg: #070B10;
+  --drive-surface: #0D141D;
+  --drive-text: #F5F7FA;
+  --drive-muted: #8B98A7;
+  --route: #7FA3FF;
+  --shadow: 0 14px 42px rgba(24, 35, 52, .08);
+  --shadow-soft: 0 6px 20px rgba(24, 35, 52, .06);
+  --radius: 18px;
+  --radius-sm: 12px;
+  --page: min(1520px, calc(100vw - 48px));
+  font-family: Inter, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--ink);
+  background: var(--canvas);
+  font-synthesis: none;
+}

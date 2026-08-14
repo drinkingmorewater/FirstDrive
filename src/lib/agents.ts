@@ -1,29 +1,11 @@
-import { calculateRouteDifficulty, recommendRoute } from './engine'
-import { rehearsalPoints, routeOptions } from '../data/demo'
 import type { AppState, FamiliarityStatus } from '../types'
 
-export const toolNames = [
+export const readinessToolNames = [
   'getUserProfile', 'getFamiliarityProfile', 'updateFamiliarity', 'searchVehicles',
   'calculateTCO', 'getRouteOptions', 'calculateRouteDifficulty', 'getWeather',
   'getVehicleManual', 'createRehearsal', 'createPreDriveChecklist',
   'updateJourneyMemory', 'getEmergencyWorkflow',
 ] as const
-
-export const publicTrace = [
-  '读取驾驶熟悉度', '比较两条路线', '检查明日环境', '读取当前车辆',
-  '识别陌生路段', '生成路线预演', '保存旅程记忆',
-]
-
-export function firstDriveOrchestrator(state: AppState) {
-  const recommendation = recommendRoute(routeOptions, state)
-  return {
-    recommendation,
-    routeScores: routeOptions.map(route => ({ id: route.id, score: calculateRouteDifficulty(route, state.familiarity, state.journey.weather) })),
-    rehearsalPoints,
-    checklist: createPreDriveChecklist(state),
-    trace: publicTrace,
-  }
-}
 
 export function createPreDriveChecklist(state: AppState) {
   const items = [

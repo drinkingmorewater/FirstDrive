@@ -1,9 +1,8 @@
-import { ArrowLeft, ArrowRight, Check, CircleAlert, Clock3, Lightbulb, TimerReset } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, CircleAlert, Clock3, Eye, Lightbulb, TimerReset } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { AppShell } from '../components/AppShell'
-import { Button } from '../components/Button'
 import { RehearsalDiagram } from '../components/RehearsalDiagram'
 import { useAppState } from '../state/AppState'
 
@@ -11,38 +10,33 @@ export function Rehearsal() {
   const navigate = useNavigate()
   const { state } = useAppState()
   const [index, setIndex] = useState(0)
-  const [understood, setUnderstood] = useState<Set<number>>(new Set())
+  const [understood, setUnderstood] = useState<number[]>([])
   const point = state.journey.rehearsalPoints[index]
-
-  const mark = () => setUnderstood(current => new Set(current).add(index))
-  const next = () => setIndex(current => Math.min(current + 1, state.journey.rehearsalPoints.length - 1))
 
   return (
     <AppShell compact>
-      <div className="rehearsal-page">
-        <header className="rehearsal-top"><button onClick={() => navigate('/trip/compare')}><ArrowLeft size={17} /> 返回路线比较</button><span>从家到医院 / 路线预演</span></header>
-        <div className="rehearsal-main">
-          <section className="rehearsal-visual">
-            <AnimatePresence mode="wait"><motion.div key={point.id} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: .28 }}><RehearsalDiagram point={point} /></motion.div></AnimatePresence>
-            <div className="rehearsal-timeline">
-              {state.journey.rehearsalPoints.map((item, itemIndex) => (
-                <button key={item.id} className={`${itemIndex === index ? 'active' : ''} ${understood.has(itemIndex) ? 'done' : ''}`} onClick={() => setIndex(itemIndex)}>
-                  <span>{understood.has(itemIndex) ? <Check size={15} /> : itemIndex + 1}</span><time>{item.time}</time><b>{item.title.replace('第一次进入', '').replace('停车入口', '')}</b>
-                </button>
-              ))}
-            </div>
+      <div className="rehearsal-v3">
+        <header><Link to="/trip/compare"><ArrowLeft /> 返回路线比较</Link><div><span>ROUTE REHEARSAL</span><strong>3 个关键点 · 约 6 分钟</strong></div></header>
+        <div className="rehearsal-grid">
+          <section className="road-stage">
+            <AnimatePresence mode="wait"><motion.div key={point.id} initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -18 }}><RehearsalDiagram point={point} /></motion.div></AnimatePresence>
+            <div className="road-stage-tag"><Eye /><span>你会先看到</span><strong>{point.kind === 'merge' ? '右侧入口与加速车道' : point.kind === 'split' ? '北城方向标牌与右侧分流' : '公交站后的地面停车入口'}</strong></div>
           </section>
-          <aside className="rehearsal-copy">
-            <span className="rehearsal-progress">{index + 1} / {state.journey.rehearsalPoints.length}</span>
-            <h1>{point.title}</h1>
-            <p className="point-time"><Clock3 size={18} /> 预计 {point.time}</p>
-            <div className="core-reminder"><CircleAlert size={29} /><strong>{point.coreReminder}</strong></div>
-            <div className="knowledge-block"><TimerReset size={21} /><div><span>什么时候开始准备</span><b>{point.preparation}</b></div></div>
-            <div className="knowledge-block tips"><Lightbulb size={21} /><div><span>提前知道</span><ul>{point.tips.map(tip => <li key={tip}>{tip}</li>)}</ul></div></div>
-            <div className="step-buttons"><Button variant="secondary" disabled={index === 0} onClick={() => setIndex(value => Math.max(0, value - 1))}>上一个</Button><Button variant={understood.has(index) ? 'ghost' : 'secondary'} onClick={mark}><Check size={17} /> {understood.has(index) ? '已理解' : '我已理解'}</Button><Button onClick={next} disabled={index === state.journey.rehearsalPoints.length - 1}>下一个 <ArrowRight size={16} /></Button></div>
-            <Button wide onClick={() => navigate('/trip/checklist')}>完成预演，查看出发清单 <ArrowRight size={17} /></Button>
+          <aside className="rehearsal-guide">
+            <span className="panel-kicker">关键点 {index + 1} / {state.journey.rehearsalPoints.length}</span>
+            <h1>{point.title}</h1><p className="point-meta"><Clock3 /> 预计 {point.time} · {point.distance}</p>
+            <div className="core-callout"><CircleAlert /><strong>{point.coreReminder}</strong></div>
+            <div className="guide-row"><TimerReset /><div><small>什么时候开始准备</small><strong>{point.preparation}</strong></div></div>
+            <div className="guide-row"><Lightbulb /><div><small>提前知道</small>{point.tips.map(tip => <p key={tip}>· {tip}</p>)}</div></div>
+            <button className={understood.includes(index) ? 'understood checked' : 'understood'} onClick={() => setUnderstood(current => current.includes(index) ? current : [...current, index])}><Check />{understood.includes(index) ? '已加入驾驶提示' : '我已理解这个关键点'}</button>
           </aside>
         </div>
+        <footer className="rehearsal-timeline-v3">
+          {state.journey.rehearsalPoints.map((item, itemIndex) => <button key={item.id} className={itemIndex === index ? 'active' : ''} onClick={() => setIndex(itemIndex)}><i>{understood.includes(itemIndex) ? <Check /> : itemIndex + 1}</i><span>{item.time}</span><strong>{item.title}</strong></button>)}
+          {index < state.journey.rehearsalPoints.length - 1
+            ? <button className="primary-action" onClick={() => setIndex(value => value + 1)}>下一个关键点 <ArrowRight /></button>
+            : <button className="primary-action" onClick={() => navigate('/trip/checklist')}>查看出发清单 <ArrowRight /></button>}
+        </footer>
       </div>
     </AppShell>
   )
