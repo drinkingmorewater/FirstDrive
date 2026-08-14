@@ -38,6 +38,7 @@ function HelpHub() {
 }
 
 function AccidentTool() {
+  const { addIncidentRecord, emitAgentEvent } = useAppState()
   const steps = ['先确认人员安全', '现场照片清单', '收集对方信息', '整理事故经过', '保险材料']
   const [step, setStep] = useState(0)
   const checklists = [
@@ -48,7 +49,14 @@ function AccidentTool() {
     ['事故照片原图', '双方证件信息', '事故经过记录', '报警或报案编号'],
   ]
   const [checked, setChecked] = useState<number[]>([])
-  const next = () => { setStep(value => Math.min(4, value + 1)); setChecked([]) }
+  const [saved, setSaved] = useState(false)
+  const next = () => {
+    if (step < 4) { setStep(value => value + 1); setChecked([]); return }
+    const record = { id: `incident-${Date.now()}`, time: new Date().toISOString(), location: '上海 · 浦东新区 · 张杨路近世纪大道', photos: ['现场全景', '碰撞点', '双方车牌'], peopleSafe: true, otherPartyInfo: '已记录驾驶证、行驶证与联系方式', description: '双方同向行驶，低速接触；仅记录事实，未判断责任。', insuranceChecklist: checklists[4], status: 'ready' as const }
+    addIncidentRecord(record)
+    emitAgentEvent({ agent: 'help', status: 'completed', title: 'Incident Record 已保存', detail: '照片、对方信息、事故经过与保险清单已写入 Incident Memory' })
+    setSaved(true)
+  }
   return <section className="accident-tool">
     <header><span>事故助手 · ACCIDENT ASSISTANT</span><h1>{steps[step]}</h1><p>步骤 {step + 1} / 5 · 只收集与整理，不判断事故责任。</p></header>
     <div className="stepper">{steps.map((label, index) => <button key={label} className={index === step ? 'active' : index < step ? 'done' : ''} onClick={() => { setStep(index); setChecked([]) }}><i>{index < step ? <Check /> : index + 1}</i><span>{label}</span></button>)}</div>
@@ -58,23 +66,27 @@ function AccidentTool() {
       </div>
       <aside>{step === 0 ? <><ShieldAlert /><strong>先保护人，再处理车。</strong><p>如有人受伤或现场仍有危险，请立即联系 120 / 110。</p><a href="tel:120"><Phone /> 拨打 120</a></> : step === 1 ? <><Camera /><strong>照片要完整，但不要冒险。</strong><p>保持原图，不编辑时间与位置信息。</p></> : <><FileText /><strong>Help Agent 正在整理</strong><p>你确认的信息会进入一份可继续补充的材料包。</p></>}</aside>
     </div>
-    <button className="primary-action" onClick={next} disabled={step === 4}>{checked.length ? '已完成当前步骤，继续' : '我已确认，继续'} <ArrowRight /></button>
+    <button className="primary-action" onClick={next} disabled={saved}>{saved ? '事故材料包已保存' : step === 4 ? '保存事故材料包' : checked.length ? '已完成当前步骤，继续' : '我已确认，继续'} <ArrowRight /></button>
   </section>
 }
 
 function RepairTool() {
+  const { addTimeline } = useAppState()
   const [text, setText] = useState('')
   const [done, setDone] = useState(false)
+  const [repaired, setRepaired] = useState(false)
   return <section className="simple-help-tool"><span className="eyebrow">REPAIR TRANSLATOR</span><h1>把维修术语，翻译成<br />你能做决定的信息。</h1><p>粘贴维修店的检测结论或报价，FirstDrive 会拆成“要做什么、为什么、现在是否必要”。</p>
     <div className="repair-box"><MessageSquareText /><textarea value={text} onChange={event => setText(event.target.value)} placeholder="例如：建议更换前减震器顶胶、清洗节气门…" /><button onClick={() => { if (!text) setText('右前减震器顶胶老化，建议更换；节气门积碳，建议清洗。工时费 680 元。'); setDone(true) }}>翻译维修建议</button></div>
-    {done ? <div className="translation-results"><article><Stethoscope /><span><small>现在需要处理</small><strong>右前减震器顶胶老化</strong><p>如果已有异响或转向卡顿，建议近期处理；请让技师展示松旷或开裂证据。</p></span></article><article><CircleHelp /><span><small>可以继续追问</small><strong>节气门清洗依据是什么？</strong><p>询问是否有怠速不稳、故障码或可见积碳，不必仅凭里程更换。</p></span></article></div> : null}
+    {done ? <><div className="translation-results"><article><Stethoscope /><span><small>现在需要处理</small><strong>右前减震器顶胶老化</strong><p>如果已有异响或转向卡顿，建议近期处理；请让技师展示松旷或开裂证据。</p></span></article><article><CircleHelp /><span><small>可以继续追问</small><strong>节气门清洗依据是什么？</strong><p>询问是否有怠速不稳、故障码或可见积碳，不必仅凭里程更换。</p></span></article></div><button className="primary-action" disabled={repaired} onClick={() => { addTimeline({ id: `repair-${Date.now()}`, date: new Date().toISOString().slice(0,10), domain: 'vehicle', title: '维修完成：右前减震器顶胶', detail: '维修建议、追问与完成状态已同步 Vehicle Memory。' }); setRepaired(true) }}>{repaired ? '已写入 Vehicle Memory' : '标记为已维修并保存'}</button></> : null}
   </section>
 }
 
 function RentalTool() {
+  const { addTimeline } = useAppState()
   const items = ['拍摄车辆四周与已有划痕', '确认油量 / 电量与归还要求', '检查轮胎、灯光和随车工具', '在车辆静止时熟悉挡位与手刹', '确认保险免赔额与道路救援']
   const [checked, setChecked] = useState<number[]>([])
-  return <ChecklistHelp eyebrow="RENTAL MODE" title="陌生的车，先花三分钟建立掌控感。" items={items} checked={checked} setChecked={setChecked} />
+  const [saved, setSaved] = useState(false)
+  return <><ChecklistHelp eyebrow="RENTAL MODE" title="陌生的车，先花三分钟建立掌控感。" items={items} checked={checked} setChecked={setChecked} />{checked.length === items.length ? <button className="primary-action" disabled={saved} onClick={() => { addTimeline({ id: `rental-${Date.now()}`, date: new Date().toISOString().slice(0,10), domain: 'vehicle', title: '创建 Rental Session', detail: '取车外观、里程、能源、保险和归还规则已记录。' }); setSaved(true) }}>{saved ? 'Rental Session 已保存' : '保存 Rental Session'}</button> : null}</>
 }
 
 function AbroadTool() {

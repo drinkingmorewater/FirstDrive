@@ -11,7 +11,7 @@ const stages: Array<{ id: VoiceStage; label: string }> = [
 ]
 
 export function VoiceDock({ open, onClose, driveMode = false }: { open: boolean; onClose: () => void; driveMode?: boolean }) {
-  const { emitAgentEvent, patchLiveContext } = useAppState()
+  const { state, emitAgentEvent, patchLiveContext } = useAppState()
   const [stage, setStage] = useState<VoiceStage>('idle')
   const [utterance, setUtterance] = useState('')
   const [answer, setAnswer] = useState('')
@@ -26,7 +26,7 @@ export function VoiceDock({ open, onClose, driveMode = false }: { open: boolean;
       emitAgentEvent({ agent: 'road', status: 'running', title: '正在理解你的问题', detail: text })
     }, 520))
     timers.current.push(window.setTimeout(() => {
-      const nextAnswer = answerVoiceIntent(text)
+      const nextAnswer = answerVoiceIntent(text, state)
       if (text.includes('路线')) patchLiveContext({ routeVersion: 2, etaMinutes: 41 })
       setAnswer(nextAnswer); setStage('speaking')
       emitAgentEvent({ agent: 'road', status: 'completed', title: '语音任务已完成', detail: nextAnswer })

@@ -6,9 +6,9 @@ import { VoiceDock } from './VoiceDock'
 import { useAppState } from '../state/AppState'
 
 const navItems = [
-  { to: '/familiarity', label: '认识我', en: 'KNOW ME', icon: UserRound },
+  { to: '/me', label: '认识我', en: 'KNOW ME', icon: UserRound },
   { to: '/buy', label: '聪明买', en: 'BUY SMART', icon: CarFront },
-  { to: '/trip/new', label: '准备好', en: 'DRIVE SAFE', icon: Sparkles },
+  { to: '/firsts', label: '准备好', en: 'DRIVE SAFE', icon: Sparkles },
   { to: '/trip/drive', label: '在路上', en: 'ON THE ROAD', icon: Navigation },
   { to: '/help', label: '帮帮我', en: 'HELP ME', icon: HelpCircle },
 ]

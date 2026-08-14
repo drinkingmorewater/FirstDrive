@@ -1,50 +1,52 @@
-# FirstDrive v3.0 Design System
+# FirstDrive v4.0 Design System
 
 ## 视觉主张
 
-Calm Mobility OS：冷静、精确、可解释。准备阶段使用开放的冷白画布；驾驶阶段切换为近黑实时驾驶舱。全站不使用珊瑚红，也不使用营销型渐变大胶囊。
+Calm Mobility OS：冷静、精确、可解释。v4 的 BUY SMART 采用真白底、窄画像侧栏、细分隔线和高信息密度表格；不把数据表格改成卡片海。
 
-## Tokens
+## 核心 Tokens
 
 | 角色 | 值 |
 | --- | --- |
-| Canvas | #F4F6F8 |
-| Surface | #FFFFFF |
-| Ink | #0A0E14 |
-| Secondary | #65707C |
-| Hairline | #DDE2E7 |
-| Accent | #5B7CFA |
-| Accent Soft | #EAF0FF |
-| Success | #2FA67C |
-| Warning | #D89B3C |
-| Critical | #D95563 |
-| Drive Background | #070B10 |
-| Drive Text | #F5F7FA |
-| Drive Muted | #8B98A7 |
-| Route | #7FA3FF |
+| Buy Background | `#FFFFFF` |
+| Canvas | `#F4F6F8` |
+| Ink | `#172033` / `#0A0E14` |
+| Secondary | `#65707C` |
+| Hairline | `#DDE2E7` |
+| Buy Accent | `#446CF4` |
+| Accent Soft | `#EEF3FF` |
+| Success | `#1DA979` |
+| Warning | `#E49A31` |
+| Critical | `#D95563` |
+| Drive Background | `#070B10` |
 
-字体：Inter 优先，中文回退到本地 Noto Sans SC。标题使用紧凑负字距，正文保持 1.6–1.9 行高。
+字体使用 Inter / Noto Sans SC。工具栏、表头与说明文字显式定义 7–11px 级别；车型名与关键数字形成 14–24px 的主要层级。
 
-## 布局
+## BUY SMART 容器模型
 
-- 全局顶部是五层工作区导航，不使用传统功能菜单。
-- 页面以画布、细分隔线和局部面板组织；圆角限制在 8–18px。
-- 一屏仅允许一个蓝色主行动作。
-- 桌面重点屏宽为 1440 / 1366，移动重点屏宽为 390。
-- Driving Cockpit 固定为 Top Status / Live Map / Context Rail / Safe Controls 四区。
+- 1680×943 原生验收尺寸：258px Profile Rail + 自适应主工作区。
+- Header、Tabs、Scenario Simulator、Filter Bar、Ranking Table、TCO Detail 顺序固定。
+- 车型结果使用 6 列表格骨架：排名 / 车型 / Fit Score / 为什么适合 / 可能的取舍 / 场景匹配。
+- TCO 使用分类 Rail + 指标 / 明细表 + 对比要点，不使用重复卡片栅格。
+- 白底车辆渲染图作为独立产品资产；文字、分数、进度和操作全部是原生 UI。
 
-## 状态与反馈
+## 响应式
+
+- 1500px 以上锁定参考图密度，并在 943px 高度内完整呈现主屏。
+- 1040px 以下 Profile Rail 改为横向可编辑 Context Strip。
+- 720px 以下车型结果改为三段式移动布局，隐藏桌面场景列，但保留 Fit、理由、取舍与 TCO。
+- TCO 明细表在自己的容器中横向滚动；页面本身不得产生横向溢出。
+
+## 状态语义
 
 - Active / Route：蓝色。
 - Completed / Familiar：绿色。
-- Attention / Weather：琥珀色。
+- Trade-off / Attention：琥珀色。
 - Critical / Emergency：红色，仅用于安全风险。
-- Agent 状态必须来自运行时事件；不得用静态 Trace 冒充执行过程。
+- Agent Activity 必须来自运行事件；保存动作必须反馈到对应 Memory。
 
-## Motion
+## Motion 与可访问性
 
-- Agent Running 图标缓慢旋转。
-- 当前车辆点使用低频脉冲。
-- 语音阶段以 Listening → Understanding → Agent Working → Speaking 依次高亮。
-- 路线进度每 2 秒自动更新。
-- 尊重 prefers-reduced-motion。
+- 交互反馈以选中、进度和 Toast 为主，避免驾驶场景中的无意义动效。
+- 所有图标按钮有可读名称，表格与工作流有语义化区域。
+- 尊重 `prefers-reduced-motion`。

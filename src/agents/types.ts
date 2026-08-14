@@ -1,4 +1,4 @@
-import type { AgentEvent, AgentId, AppState, LiveDriveContext } from '../types'
+import type { AgentEvent, AgentId, AgentResult, AppState, LiveDriveContext } from '../types'
 
 export type AgentEmitter = (event: Omit<AgentEvent, 'id' | 'timestamp'>) => void
 
@@ -8,9 +8,9 @@ export interface AgentRuntimeContext {
   emit: AgentEmitter
 }
 
-export interface MobilityAgent {
+export interface MobilityAgent<T = unknown> {
   id: AgentId
   label: string
   purpose: string
-  execute: (context: AgentRuntimeContext) => Promise<string>
+  execute: (context: AgentRuntimeContext) => Promise<AgentResult<T>>
 }

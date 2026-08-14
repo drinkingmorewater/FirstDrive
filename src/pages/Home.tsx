@@ -1,27 +1,27 @@
-import { ArrowRight, CarFront, HelpCircle, Mic, Navigation, ShieldCheck, Sparkles, UserRound } from 'lucide-react'
+import { ArrowRight, CalendarDays, CarFront, CloudRain, HelpCircle, Mic, Navigation, ShieldCheck, Sparkles, UserRound, Wrench } from 'lucide-react'
 import { FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { AppShell } from '../components/AppShell'
 import { MobilityMap } from '../components/MobilityMap'
 import { useAppState } from '../state/AppState'
+import { selectNextFirst } from '../context/selectors'
 
 const layers = [
-  { to: '/familiarity', en: 'KNOW ME', zh: '认识我', copy: '熟悉度与辅助偏好', icon: UserRound },
+  { to: '/me', en: 'KNOW ME', zh: '认识我', copy: '汽车生活护照与熟悉度', icon: UserRound },
   { to: '/buy', en: 'BUY SMART', zh: '聪明买', copy: '适配生活，而非参数竞赛', icon: CarFront },
-  { to: '/trip/new', en: 'DRIVE SAFE', zh: '准备好', copy: '路线预演与出发检查', icon: ShieldCheck },
+  { to: '/firsts', en: 'DRIVE SAFE', zh: '准备好', copy: '第一次、练习与路线预演', icon: ShieldCheck },
   { to: '/trip/drive', en: 'ON THE ROAD', zh: '在路上', copy: '实时理解，主动协助', icon: Navigation },
   { to: '/help', en: 'HELP ME', zh: '帮帮我', copy: '事故、维修、租车与海外', icon: HelpCircle },
 ]
 
 export function Home() {
   const navigate = useNavigate()
-  const { state, resetDemo, patchJourney, clearRuntime } = useAppState()
+  const { state, patchJourney, clearRuntime } = useAppState()
   const [destination, setDestination] = useState('浦东嘉里医院')
 
   const start = (event: FormEvent) => {
     event.preventDefault()
-    resetDemo()
     clearRuntime()
     patchJourney({ destination: destination.trim() || '浦东嘉里医院', completionStatus: 'draft', selectedRoute: null })
     navigate('/trip/new')
@@ -43,8 +43,9 @@ export function Home() {
             <button className="command-go" aria-label="开始规划"><ArrowRight /></button>
           </form>
           <div className="home-memory-line">
-            <span>为 {state.user.name} 准备</span><b>快速路希望先了解</b><b>高架尚未独立完成</b><b>偏好提前提醒</b>
+            <span>为 {state.user.name} 准备</span><b>{selectNextFirst(state)}希望先了解</b><b>{state.user.mobility.assistancePreference.advanceNoticeMinutes} 分钟前提醒</b><b>{state.user.mobility.routePreference.easy > 70 ? '偏好更简单路线' : '优先更快路线'}</b>
           </div>
+          <div className="home-personal-strip"><span><CalendarDays /><small>Tomorrow</small><b>第一次独立高架</b></span><span><Wrench /><small>Your car</small><b>{state.memory.maintenance[0]}</b></span><span><Sparkles /><small>Next first</small><b>{selectNextFirst(state)}</b></span><span><CloudRain /><small>Upcoming</small><b>周末长途可能有雨</b></span></div>
         </div>
 
         <div className="home-canvas">
