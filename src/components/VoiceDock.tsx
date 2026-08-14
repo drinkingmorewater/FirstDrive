@@ -1,7 +1,9 @@
 import { ChevronDown, Mic, Sparkles, Volume2, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { answerVoiceIntent, createRecognition, scriptedUtterances, speak } from '../voice'
+import { useNavigate } from 'react-router-dom'
+import { answerVoiceIntent, createRecognition, routeVoiceIntent, scriptedUtterances, speak } from '../voice'
+import { createTaskGraph, executeTaskGraph, extractProfileDraft } from '../agents'
 import { useAppState } from '../state/AppState'
 import type { VoiceStage } from '../types'
 
@@ -11,34 +13,30 @@ const stages: Array<{ id: VoiceStage; label: string }> = [
 ]
 
 export function VoiceDock({ open, onClose, driveMode = false }: { open: boolean; onClose: () => void; driveMode?: boolean }) {
-  const { state, emitAgentEvent, patchLiveContext } = useAppState()
+  const navigate = useNavigate()
+  const { state, emitAgentEvent, patchLiveContext, setProfileDraft, setActiveTaskId } = useAppState()
   const [stage, setStage] = useState<VoiceStage>('idle')
   const [utterance, setUtterance] = useState('')
   const [answer, setAnswer] = useState('')
-  const timers = useRef<number[]>([])
-  const clearTimers = () => { timers.current.forEach(window.clearTimeout); timers.current = [] }
-  useEffect(() => clearTimers, [])
 
-  const run = (text: string) => {
-    clearTimers(); setUtterance(text); setAnswer(''); setStage('understanding')
-    timers.current.push(window.setTimeout(() => {
-      setStage('working')
-      emitAgentEvent({ agent: 'road', status: 'running', title: '正在理解你的问题', detail: text })
-    }, 520))
-    timers.current.push(window.setTimeout(() => {
-      const nextAnswer = answerVoiceIntent(text, state)
-      if (text.includes('路线')) patchLiveContext({ routeVersion: 2, etaMinutes: 41 })
-      setAnswer(nextAnswer); setStage('speaking')
-      emitAgentEvent({ agent: 'road', status: 'completed', title: '语音任务已完成', detail: nextAnswer })
-      speak(nextAnswer, () => setStage('idle'))
-    }, 1280))
+  const run = async (text: string) => {
+    setUtterance(text); setAnswer(''); setStage('understanding')
+    const intent = routeVoiceIntent(text)
+    const task = createTaskGraph(intent, text, state)
+    setActiveTaskId(task.id)
+    if (intent === 'profile_intake' || intent === 'profile_update') setProfileDraft(text, extractProfileDraft(text))
+    setStage('working')
+    await executeTaskGraph(task, emitAgentEvent, { delay: 170 })
+    if (intent === 'navigation') patchLiveContext({ routeVersion: 2, etaMinutes: 41 })
+    const nextAnswer = answerVoiceIntent(text, state)
+    setAnswer(nextAnswer); setStage('speaking'); setActiveTaskId(null)
+    speak(nextAnswer, () => setStage('idle'))
+    if (intent === 'profile_intake') { onClose(); navigate('/me/analysis') }
   }
 
   const listen = () => {
     setStage('listening'); setUtterance(''); setAnswer('')
-    createRecognition().listen(run, () => {
-      timers.current.push(window.setTimeout(() => run(scriptedUtterances[0]), 650))
-    })
+    createRecognition().listen(text => void run(text), () => { void run(scriptedUtterances[0]) })
   }
 
   return (
@@ -51,7 +49,7 @@ export function VoiceDock({ open, onClose, driveMode = false }: { open: boolean;
             <button className={'voice-orb ' + (stage !== 'idle' ? 'active' : '')} onClick={listen} aria-label="开始语音输入"><Mic /></button>
             <div><small>你说</small><strong>{utterance || (stage === 'listening' ? '正在听…' : '点击麦克风，或选择一句演示指令')}</strong>{answer ? <><small>FirstDrive 说</small><p><Volume2 />{answer}</p></> : null}</div>
           </div>
-          <div className="voice-scripts"><span>你可以这样说 <ChevronDown /></span>{scriptedUtterances.slice(0, 4).map(item => <button key={item} onClick={() => run(item)}>{item}</button>)}</div>
+          <div className="voice-scripts"><span>你可以这样说 <ChevronDown /></span>{scriptedUtterances.slice(0, 4).map(item => <button key={item} onClick={() => void run(item)}>{item}</button>)}</div>
         </motion.section>
       ) : null}
     </AnimatePresence>

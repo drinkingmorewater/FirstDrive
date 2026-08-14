@@ -177,7 +177,11 @@ export function createDemoState(personaId: PersonaId = 'buyer'): AppState {
   const user = userFor(personaId, mobility)
   const vehicle = vehicles.find(item => item.id === user.vehicleId) ?? vehicles[0]
   return {
-    version: 4,
+    version: 5,
+    onboardingStatus: 'new',
+    profileIntake: { transcript: '', draft: null, answers: {}, confirmed: false },
+    coachMarksSeen: [],
+    activeTaskId: null,
     user,
     familiarity: familiarityFor(personaId),
     vehicle,
@@ -189,9 +193,10 @@ export function createDemoState(personaId: PersonaId = 'buyer'): AppState {
       confidence: personaId === 'practice' ? 62 : 78,
       person: { learnedPreferences: ['更偏好容易驾驶的路线', '希望复杂节点提前说明'], lastUpdated: '2026/08/14' },
       familiarity: { completedFirsts: ['第一次独立快速路'], assistanceReductions: 1 },
-      vehicle: { maintenanceRecords: ['2026/06/30 常规保养'], deliveryRecords: [], usedCarReports: [] },
-      journey: { routeChoices: [{ mode: 'Easy', count: 3 }], roadTrips: personaId === 'roadtrip' ? ['北京 → 承德'] : [] },
+      vehicle: { maintenanceRecords: ['2026/06/30 常规保养'], deliveryRecords: [], usedCarReports: [], firstDriveCompleted: [] },
+      journey: { routeChoices: [{ mode: 'Easy', count: 3 }], roadTrips: personaId === 'roadtrip' ? ['北京 → 承德'] : [], roadTripPlans: [] },
       cost: { savedPlans: [], totalTracked: 0 }, incident: { records: [] },
+      rental: { sessions: [] },
       timeline: [
         { id: 'm1', date: '2026/08/12', domain: 'familiarity', title: '第一次独立快速路', detail: '完成 18 km，下一次减少入口基础提醒。' },
         { id: 'm2', date: '2026/08/10', domain: 'journey', title: '选择更简单路线', detail: '系统学习到 lowStress 偏好。' },

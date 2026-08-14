@@ -26,6 +26,11 @@ export function getAssistanceLevel(status: FamiliarityProfile[FamiliarityKey]): 
 }
 
 export function recommendRoute(routes: RouteOption[], state: AppState) {
+  const elevatedReady = ['completed_independently', 'familiar'].includes(state.familiarity.elevatedRoad)
+  const expresswayReady = ['completed_independently', 'familiar'].includes(state.familiarity.expressway)
+  if (elevatedReady && expresswayReady && state.user.mobility.routePreference.fastest >= 45) {
+    return routes.reduce((fastest, route) => route.duration < fastest.duration ? route : fastest, routes[0])
+  }
   return routes.reduce((best, route) => {
     const preference = state.user.mobility.routePreference
     const current = calculateRouteDifficulty(route, state.familiarity, state.journey.weather)
@@ -103,7 +108,7 @@ const scenarioWeight: Record<ScenarioId, Record<string, number>> = {
   camping: { model3: 5, lil6: 14, zeekr007: 8, camry: 6, id4: 12, corolla: 10 },
 }
 
-const vehicleBase: Record<string, number> = { model3: 46, lil6: 50, zeekr007: 44, camry: 40, id4: 39, corolla: 40 }
+const vehicleBase: Record<string, number> = { model3: 46, lil6: 50, zeekr007: 44, camry: 36, id4: 39, corolla: 40 }
 
 function budgetFit(vehicle: VehicleProfile, profile: MobilityProfile) {
   const ceiling = profile.purchaseBudget ?? 250000

@@ -34,7 +34,7 @@ const sectionIcons = [Route, Map, UsersRound, Gauge, ShieldCheck, HeartHandshake
 
 export function Onboarding() {
   const navigate = useNavigate()
-  const { state, patchMobility, updateFamiliarity } = useAppState()
+  const { state, patchMobility, updateFamiliarity, setOnboardingStatus } = useAppState()
   const [step, setStep] = useState(0)
   const [draft, setDraft] = useState<Draft>(() => {
     try { return JSON.parse(localStorage.getItem('firstdrive-onboarding-draft') ?? '') as Draft } catch { return { mobility: structuredClone(state.user.mobility), familiarity: structuredClone(state.familiarity) } }
@@ -49,8 +49,9 @@ export function Onboarding() {
   const finish = (next: Draft) => {
     patchMobility(next.mobility)
     ;(Object.keys(next.familiarity) as FamiliarityKey[]).forEach(key => updateFamiliarity(key, next.familiarity[key]))
+    setOnboardingStatus('completed')
     localStorage.removeItem('firstdrive-onboarding-draft')
-    navigate('/me')
+    navigate('/me/passport')
   }
 
   const choose = (value: string) => {

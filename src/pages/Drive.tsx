@@ -2,7 +2,6 @@ import { AlertTriangle, Fuel, HelpCircle, Mic, Navigation, Pause, Play, Route, V
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AgentActivity } from '../components/AgentActivity'
-import { Brand } from '../components/Brand'
 import { MobilityMap } from '../components/MobilityMap'
 import { VoiceDock } from '../components/VoiceDock'
 import { runReplanningSequence } from '../agents'
@@ -54,12 +53,10 @@ export function Drive() {
 
   return (
     <div className="live-drive">
-      <header className="drive-topbar">
-        <Brand inverse /><div className="drive-status"><span>08:51</span><b>D</b><strong>READY</strong><em>{context.speed} <small>km/h</small></em></div><div><Fuel />{context.fuel}%<span>5G</span><span>22°C</span></div>
-      </header>
       <main className="drive-cockpit">
         <section className="drive-map-stage">
           <MobilityMap progress={context.progress} dark />
+          <div className="drive-inline-status"><span>08:51</span><b>D</b><strong>READY</strong><em>{context.speed} <small>km/h</small></em><i><Fuel />{context.fuel}%</i></div>
           <div className="maneuver-card"><Navigation /><div><small>{context.nextManeuverDistance} km 后</small><strong>{context.nextManeuver}</strong><span>{context.distanceRemaining} km · 预计 {context.etaMinutes} 分钟</span></div></div>
           {activeEvent ? <div className={'proactive-alert ' + activeEvent.severity}><AlertTriangle /><div><strong>{activeEvent.title}</strong><span>{activeEvent.detail}</span></div><button onClick={() => setActiveEvent(null)}>知道了</button></div> : null}
           {context.routeVersion === 2 ? <div className="plan-updated">

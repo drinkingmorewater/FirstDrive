@@ -1,52 +1,56 @@
-# FirstDrive v4.0 Design System
+# FirstDrive v5.0 Design System
 
 ## 视觉主张
 
-Calm Mobility OS：冷静、精确、可解释。v4 的 BUY SMART 采用真白底、窄画像侧栏、细分隔线和高信息密度表格；不把数据表格改成卡片海。
+Calm Mobility OS：冷静、精确、可解释。v5 保留 v4 的真白、冷灰、细分隔线与信息密度，不更换配色，不使用霓虹 Agent 图或无意义 3D 汽车。
+
+## Global Frame
+
+- 正常模式：固定 72px 白色导航。
+- 驾驶模式：固定 60px 深色导航。
+- 五层顺序永远为 KNOW ME、BUY SMART、DRIVE SAFE、ON THE ROAD、HELP ME。
+- 页面切换只移动 Active Indicator；Logo、五层位置与用户入口不移动。
+- 移动端仍同时显示五层，压缩为序号与中文短标签。
+
+## Logo
+
+- `MountainMark.tsx` 是唯一 Logo 图形，固定 32 × 32、统一 viewBox 与 2.4 stroke。
+- Light 使用深墨色，Dark 使用白色，仅颜色变化。
+- Wordmark 只用于 Welcome/Home 等品牌表达，内部工具页不重复组合 Logo。
 
 ## 核心 Tokens
 
 | 角色 | 值 |
 | --- | --- |
-| Buy Background | `#FFFFFF` |
 | Canvas | `#F4F6F8` |
-| Ink | `#172033` / `#0A0E14` |
+| Surface | `#FFFFFF` |
+| Ink | `#0A0E14` |
 | Secondary | `#65707C` |
 | Hairline | `#DDE2E7` |
-| Buy Accent | `#446CF4` |
-| Accent Soft | `#EEF3FF` |
-| Success | `#1DA979` |
-| Warning | `#E49A31` |
+| Accent | `#5B7CFA` |
+| Accent Soft | `#EAF0FF` |
+| Success | `#2FA67C` |
+| Warning | `#D89B3C` |
 | Critical | `#D95563` |
 | Drive Background | `#070B10` |
 
-字体使用 Inter / Noto Sans SC。工具栏、表头与说明文字显式定义 7–11px 级别；车型名与关键数字形成 14–24px 的主要层级。
+## Intelligence Canvas
 
-## BUY SMART 容器模型
+- 三列结构：What I Heard / Personal Mobility Context / Agent Mesh。
+- Context 固定四象限：人、车、路、境。
+- 信息可信状态固定为 Confirmed、Inferred、Need to confirm。
+- Agent Mesh 中央为 Orchestrator，外围为 ME、BUY、READY、ROAD、HELP；状态只使用 Waiting、Thinking、Using Tool、Done。
+- 连线使用细灰线与轻微流动，不使用彩色霓虹。
 
-- 1680×943 原生验收尺寸：258px Profile Rail + 自适应主工作区。
-- Header、Tabs、Scenario Simulator、Filter Bar、Ranking Table、TCO Detail 顺序固定。
-- 车型结果使用 6 列表格骨架：排名 / 车型 / Fit Score / 为什么适合 / 可能的取舍 / 场景匹配。
-- TCO 使用分类 Rail + 指标 / 明细表 + 对比要点，不使用重复卡片栅格。
-- 白底车辆渲染图作为独立产品资产；文字、分数、进度和操作全部是原生 UI。
+## BUY SMART
 
-## 响应式
+- 保留 Profile Rail、Header、Tabs、Scenario、Filter、Ranking Table 与 TCO Detail 的高密度桌面骨架。
+- 增加「来自你的哪些信息」与 `Ranking updated`，让 Know Me → Buy Agent 可见。
+- 真实表格、文字、分数与操作全部代码原生；车辆图只作为产品资产。
 
-- 1500px 以上锁定参考图密度，并在 943px 高度内完整呈现主屏。
-- 1040px 以下 Profile Rail 改为横向可编辑 Context Strip。
-- 720px 以下车型结果改为三段式移动布局，隐藏桌面场景列，但保留 Fit、理由、取舍与 TCO。
-- TCO 明细表在自己的容器中横向滚动；页面本身不得产生横向溢出。
+## 响应式与驾驶安全
 
-## 状态语义
-
-- Active / Route：蓝色。
-- Completed / Familiar：绿色。
-- Trade-off / Attention：琥珀色。
-- Critical / Emergency：红色，仅用于安全风险。
-- Agent Activity 必须来自运行事件；保存动作必须反馈到对应 Memory。
-
-## Motion 与可访问性
-
-- 交互反馈以选中、进度和 Toast 为主，避免驾驶场景中的无意义动效。
-- 所有图标按钮有可读名称，表格与工作流有语义化区域。
-- 尊重 `prefers-reduced-motion`。
+- 1680 × 943 为主桌面验收尺寸；390 × 844 为移动端验收尺寸。
+- 页面不得产生横向溢出。
+- 驾驶页使用 Mini Agent Indicator，完整 Mesh 只在非驾驶任务页或停车后展开。
+- 尊重 `prefers-reduced-motion`；关键按钮、图标操作均提供可读名称。

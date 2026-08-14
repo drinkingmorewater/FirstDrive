@@ -32,7 +32,7 @@ export function Home() {
       <section className="home-v3">
         <div className="home-intro">
           <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
-            <span className="eyebrow"><Sparkles size={16} /> CALM MOBILITY OS</span>
+            <span className="eyebrow"><Sparkles size={16} /> Good evening, {state.user.name}.</span>
             <h1>今天，<br />你准备去哪里？</h1>
             <p>FirstDrive 认识你、车、路与此刻的环境。在你需要前准备，在你紧张时少打扰。</p>
           </motion.div>
@@ -45,7 +45,7 @@ export function Home() {
           <div className="home-memory-line">
             <span>为 {state.user.name} 准备</span><b>{selectNextFirst(state)}希望先了解</b><b>{state.user.mobility.assistancePreference.advanceNoticeMinutes} 分钟前提醒</b><b>{state.user.mobility.routePreference.easy > 70 ? '偏好更简单路线' : '优先更快路线'}</b>
           </div>
-          <div className="home-personal-strip"><span><CalendarDays /><small>Tomorrow</small><b>第一次独立高架</b></span><span><Wrench /><small>Your car</small><b>{state.memory.maintenance[0]}</b></span><span><Sparkles /><small>Next first</small><b>{selectNextFirst(state)}</b></span><span><CloudRain /><small>Upcoming</small><b>周末长途可能有雨</b></span></div>
+          <div className="home-personal-strip"><span><CalendarDays /><small>Continue</small><b>{state.journey.completionStatus === 'draft' ? `${state.journey.destination} 路线准备` : '上次旅程已完成'}</b></span><span><Sparkles /><small>Next first</small><b>{selectNextFirst(state)}</b></span><span><Wrench /><small>Your car</small><b>下次保养约 1,200 km</b></span><span><CloudRain /><small>Upcoming</small><b>周末长途可能有雨</b></span></div>
         </div>
 
         <div className="home-canvas">

@@ -10,7 +10,7 @@ const tools = [
   { id: 'emergency', label: '紧急求助', en: 'Emergency', icon: ShieldAlert, to: '/emergency' },
   { id: 'accident', label: '事故助手', en: 'Accident Assistant', icon: AlertTriangle, to: '/help/accident' },
   { id: 'repair', label: '维修翻译官', en: 'Repair Translator', icon: Wrench, to: '/help/repair' },
-  { id: 'rental', label: '租车模式', en: 'Rental Mode', icon: CarFront, to: '/help/rental' },
+  { id: 'rental', label: '租车模式', en: 'Rental Mode', icon: CarFront, to: '/rental/session' },
   { id: 'abroad', label: '海外驾驶', en: 'Abroad Driving', icon: Globe2, to: '/help/abroad' },
 ]
 
@@ -66,32 +66,32 @@ function AccidentTool() {
       </div>
       <aside>{step === 0 ? <><ShieldAlert /><strong>先保护人，再处理车。</strong><p>如有人受伤或现场仍有危险，请立即联系 120 / 110。</p><a href="tel:120"><Phone /> 拨打 120</a></> : step === 1 ? <><Camera /><strong>照片要完整，但不要冒险。</strong><p>保持原图，不编辑时间与位置信息。</p></> : <><FileText /><strong>Help Agent 正在整理</strong><p>你确认的信息会进入一份可继续补充的材料包。</p></>}</aside>
     </div>
-    <button className="primary-action" onClick={next} disabled={saved}>{saved ? '事故材料包已保存' : step === 4 ? '保存事故材料包' : checked.length ? '已完成当前步骤，继续' : '我已确认，继续'} <ArrowRight /></button>
+    {saved ? <Link className="primary-action" to="/help/repair">事故材料包已保存，继续维修流程 <ArrowRight /></Link> : <button className="primary-action" onClick={next}>{step === 4 ? '保存事故材料包' : checked.length ? '已完成当前步骤，继续' : '我已确认，继续'} <ArrowRight /></button>}
   </section>
 }
 
 function RepairTool() {
-  const { addTimeline } = useAppState()
+  const { state, addTimeline } = useAppState()
   const [text, setText] = useState('')
   const [done, setDone] = useState(false)
   const [repaired, setRepaired] = useState(false)
-  return <section className="simple-help-tool"><span className="eyebrow">REPAIR TRANSLATOR</span><h1>把维修术语，翻译成<br />你能做决定的信息。</h1><p>粘贴维修店的检测结论或报价，FirstDrive 会拆成“要做什么、为什么、现在是否必要”。</p>
+  const incident = state.memory.incident.records[0]
+  return <section className="simple-help-tool"><span className="eyebrow">REPAIR TRANSLATOR</span><h1>把维修术语，翻译成<br />你能做决定的信息。</h1><p>{incident ? `已接续 ${incident.location} 的 Incident Record；维修结果会继续写入同一车辆时间线。` : '粘贴维修店的检测结论或报价，FirstDrive 会拆成“要做什么、为什么、现在是否必要”。'}</p>
     <div className="repair-box"><MessageSquareText /><textarea value={text} onChange={event => setText(event.target.value)} placeholder="例如：建议更换前减震器顶胶、清洗节气门…" /><button onClick={() => { if (!text) setText('右前减震器顶胶老化，建议更换；节气门积碳，建议清洗。工时费 680 元。'); setDone(true) }}>翻译维修建议</button></div>
     {done ? <><div className="translation-results"><article><Stethoscope /><span><small>现在需要处理</small><strong>右前减震器顶胶老化</strong><p>如果已有异响或转向卡顿，建议近期处理；请让技师展示松旷或开裂证据。</p></span></article><article><CircleHelp /><span><small>可以继续追问</small><strong>节气门清洗依据是什么？</strong><p>询问是否有怠速不稳、故障码或可见积碳，不必仅凭里程更换。</p></span></article></div><button className="primary-action" disabled={repaired} onClick={() => { addTimeline({ id: `repair-${Date.now()}`, date: new Date().toISOString().slice(0,10), domain: 'vehicle', title: '维修完成：右前减震器顶胶', detail: '维修建议、追问与完成状态已同步 Vehicle Memory。' }); setRepaired(true) }}>{repaired ? '已写入 Vehicle Memory' : '标记为已维修并保存'}</button></> : null}
   </section>
 }
 
 function RentalTool() {
-  const { addTimeline } = useAppState()
-  const items = ['拍摄车辆四周与已有划痕', '确认油量 / 电量与归还要求', '检查轮胎、灯光和随车工具', '在车辆静止时熟悉挡位与手刹', '确认保险免赔额与道路救援']
-  const [checked, setChecked] = useState<number[]>([])
-  const [saved, setSaved] = useState(false)
-  return <><ChecklistHelp eyebrow="RENTAL MODE" title="陌生的车，先花三分钟建立掌控感。" items={items} checked={checked} setChecked={setChecked} />{checked.length === items.length ? <button className="primary-action" disabled={saved} onClick={() => { addTimeline({ id: `rental-${Date.now()}`, date: new Date().toISOString().slice(0,10), domain: 'vehicle', title: '创建 Rental Session', detail: '取车外观、里程、能源、保险和归还规则已记录。' }); setSaved(true) }}>{saved ? 'Rental Session 已保存' : '保存 Rental Session'}</button> : null}</>
+  return <section className="simple-help-tool"><span className="eyebrow">RENTAL FULL LOOP</span><h1>从取车证据，到归还对照。</h1><p>建立 Rental Session 后，里程、能源、照片与已有损伤会持续到归还。</p><Link className="primary-action" to="/rental/session">开始取车检查 <ArrowRight /></Link></section>
 }
 
 function AbroadTool() {
   const [country, setCountry] = useState('日本')
-  return <section className="simple-help-tool"><span className="eyebrow">ABROAD DRIVING</span><h1>在陌生规则里，<br />先抓住最容易出错的三件事。</h1><label className="country-select">目的地<select value={country} onChange={event => setCountry(event.target.value)}><option>日本</option><option>德国</option><option>英国</option></select></label><div className="abroad-cards"><article><Globe2 /><small>行驶方向</small><strong>{country === '德国' ? '右侧通行' : '左侧通行'}</strong><p>转弯和驶出停车场时最容易回到习惯方向。</p></article><article><ClipboardList /><small>出发前</small><strong>确认驾照与租车保险</strong><p>不同国家与租车公司要求不同，以当地官方规则和合同为准。</p></article><article><LifeBuoy /><small>紧急号码</small><strong>{country === '日本' ? '110 / 119' : '112'}</strong><p>保存租车公司道路救援电话与车辆位置。</p></article></div></section>
+  const [licenseCountry, setLicenseCountry] = useState('中国')
+  const [status, setStatus] = useState('游客租车')
+  const rules = country === '德国' ? { side: '右侧通行', documents: '中国驾照 + 合规翻译件；租车公司可能有额外要求', parking: '注意居民停车区、停车盘与环保区', toll: '普通小客车高速通常不收通行费', emergency: '112' } : country === '英国' ? { side: '左侧通行', documents: '中国驾照 + 英文翻译材料，按租车公司要求核验', parking: '黄线、居民区与拥堵收费区域需单独确认', toll: '部分桥梁与城市道路收费', emergency: '999 / 112' } : { side: '左侧通行', documents: '通常需要符合日本要求的国际驾照材料；出发前核验官方规则', parking: '禁止路边随意停车，优先使用计时停车场', toll: '高速公路收费，租车可确认 ETC', emergency: '110 / 119' }
+  return <section className="simple-help-tool"><span className="eyebrow">ABROAD DRIVING</span><h1>在陌生规则里，<br />先确认自己到底能不能开。</h1><div className="abroad-inputs"><label>Country<select value={country} onChange={event => setCountry(event.target.value)}><option>日本</option><option>德国</option><option>英国</option></select></label><label>License Country<select value={licenseCountry} onChange={event => setLicenseCountry(event.target.value)}><option>中国</option><option>德国</option></select></label><label>Residence / Tourist<select value={status} onChange={event => setStatus(event.target.value)}><option>游客租车</option><option>当地居民</option></select></label></div><div className="abroad-cards"><article><Globe2 /><small>驾照与方向</small><strong>{licenseCountry}驾照 · {rules.side}</strong><p>{rules.documents}</p></article><article><ClipboardList /><small>停车与收费</small><strong>{rules.parking}</strong><p>{rules.toll}</p></article><article><LifeBuoy /><small>紧急号码</small><strong>{rules.emergency}</strong><p>{status} · 保存租车公司道路救援电话与车辆位置。</p></article></div><p className="mock-source">Mock Source · 当地交通主管部门 / 租车条款摘要 · updatedAt 2026-08-14</p></section>
 }
 
 function ChecklistHelp({ eyebrow, title, items, checked, setChecked }: { eyebrow: string; title: string; items: string[]; checked: number[]; setChecked: (value: number[]) => void }) {

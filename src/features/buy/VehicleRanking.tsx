@@ -11,7 +11,7 @@ export function VehicleRanking({ results, selectedId, onSelect }: { results: Veh
         <button key={result.vehicle.id} className={`ranking-row ${selectedId === result.vehicle.id ? 'selected' : ''}`} onClick={() => onSelect(result.vehicle.id)}>
           <span className="ranking-index"><i />{index + 1}</span>
           <span className="ranking-car">
-            <img src={result.vehicle.image} alt={`${result.vehicle.brand} ${result.vehicle.model}`} />
+            <img src={result.vehicle.image ?? (result.vehicle.bodyType === 'suv' ? '/cars/li-l6.webp' : '/cars/zeekr-007.webp')} alt={`${result.vehicle.brand} ${result.vehicle.model}`} />
             <span><strong>{result.vehicle.brand} {result.vehicle.model}</strong><small>{result.vehicle.trim}</small><em>{result.vehicle.category}</em><b>¥ {result.vehicle.price.toLocaleString()} 起</b></span>
           </span>
           <span className="ranking-score"><FitScore score={result.score} /><small>{result.score >= 90 ? '非常匹配' : result.score >= 85 ? '很匹配' : '较匹配'}</small></span>

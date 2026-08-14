@@ -1,84 +1,69 @@
-# FirstDrive｜第一公里 v4.0
+# FirstDrive｜第一公里 v5.0
 
 > 每个人，都有自己的第一公里。
 
-FirstDrive 是一个由统一 Personal Mobility Context、共享 Memory 和五个业务 Agent 驱动的汽车生活智能体。v4.0 不再把页面存在等同于功能完成：主要能力都遵循 INPUT → AGENT / RULE PROCESSING → STRUCTURED RESULT → USER ACTION → STATE / MEMORY UPDATE。
+FirstDrive 是一个持续理解「人 × 车 × 路 × 境」的汽车生活 Agent。v5.0 把自然语言画像、五 Agent 协作、场景决策、用户行动和跨任务 Memory 串成一条可运行主链路。
 
-## v4.0 已完成
+## v5.0 核心体验
 
-### KNOW ME
+### 首次打开
 
-- 7 Section、14 问的 Adaptive Onboarding，逐题保存草稿并提交到真实 Mobility Profile。
-- `/me` My Mobility Passport：My Life、My Driving、My Firsts、Car Preferences、Assistance Style。
-- 场景级 Familiarity，不创建“总驾驶能力分”。
-- Profile、Familiarity、Cost、Journey、Vehicle、Incident Memory 使用本地持久化。
+- 空状态访问 `/` 自动进入 `/welcome`，第一步始终是「先让我认识你」。
+- 支持语音或文本描述真实情况；Profile Extractor 会区分 Confirmed、Inferred 与 Need to confirm。
+- `/me/analysis` 用 Mobility Intelligence Canvas 呈现人、车、路、境，并只追问原话中缺失的信息。
+- 确认后建立 Mobility Passport，并写入 Person / Familiarity Memory。
 
-### BUY SMART
+### Global Frame 与 Agent Mesh
 
-- 高密度专业工作台，完成参考设计中的画像侧栏、筛选、三车排名、Fit Score、适合原因、取舍和场景匹配。
-- Scenario Simulator：通勤、家庭、长途、网约车、露营会实时改变排序与 TCO。
-- True Cost：购车、税费、保险、金融、能源、停车、保养、耗材与折旧；假设可编辑且标注来源。
-- Deal Checker：文本 / 本地文件输入 → 结构化费用 → 7 个销售追问 → Cost Memory。
-- Delivery Check：现场清单、照片文件记录、Vehicle Birth Record。
-- Used Car Mode：证据检查、风险判断、Used Car Inspection Report。
-- 新建方案、方案库、分享摘要、CSV 导出与三个 Demo Persona。
+- Router-level `GlobalFrame` 覆盖所有页面，五层导航始终固定。
+- `/trip/drive` 只切换为 60px 深色驾驶模式，Logo、导航与头像位置不变。
+- 全产品只使用统一 `MountainMark`；内部页面不再重复另一套 Logo。
+- Task Graph 按依赖顺序驱动 Agent；Agent Mesh 展示 Context Read、Tool Call、Handoff、Result 与 Memory Write，不展示思维链。
+- Global Voice 会把画像、买车、练习、路线、车辆、保养与求助任务分发给对应 Agent。
 
-### DRIVE SAFE / ON THE ROAD
+### 可见的个性化
 
-- `/firsts` First-Time Center：Preparation → Rehearsal → Checklist → Completed。
-- `/practice` Low-Pressure Practice Plan，提供 25 分钟 Plan A 与 42 分钟 Plan B。
-- `/trip/roadtrip` 北京 → 阿尔山 Road Trip Canvas，同时呈现路线、天气、补能、休息、住宿、景点与行李。
-- Live Context、主动事件、动态重规划与 Context-aware Voice Intent Router。
+- BUY SMART 显示推荐使用了哪些个人信息；修改家充、乘员、预算或停车条件会重算排序并解释变化。
+- Route Compare 同时解释「来自你、来自路线、来自天气」；高架熟悉度会真实改变推荐。
+- Assistance Style 会改变提醒提前量和说明密度。
 
-### HELP ME / MEMORY
+### 汽车生活连续链路
 
-- 事故工作流最终创建 IncidentRecord。
-- 维修结果可标记完成并写入 Vehicle Memory。
-- 租车检查最终创建 RentalSession 时间线记录。
-- Memory Timeline 汇总 Person / Familiarity / Vehicle / Journey / Cost / Incident。
+- `/vehicle/first-drive`：陌生车首次驾驶的 6 项必要动作，并写入 Vehicle Memory。
+- `/vehicle/manual`：按高速、雨雪、补能等上下文主动推送说明书条目。
+- `/trip/roadtrip`：Origin、Destination、日期、车辆、乘员、经验、目标和疲劳偏好都会改变里程、日程、补能、休息与风险。
+- 事故记录可连续进入保险/维修语境；维修完成写入 Vehicle Timeline。
+- `/rental/session` → `/rental/return` 保留照片、里程、能源和损伤对照。
+- Abroad Driving 保留 mock source 与 updatedAt，并根据国家、驾照国家和身份改变输出。
 
-## 统一运行架构
-
-```text
-src/context/  buildContext(state) 与 selectors
-src/tools/    五 Agent 可调用的确定性 Demo Tools
-src/agents/   AgentResult<T>、sources、memoryUpdates、nextActions
-src/state/    v4 本地持久化、Persona 切换与 Memory 写入
-src/features/buy/  BUY SMART 专用可复用组件
-src/live/     LiveDriveEngine 与主动事件规则
-src/voice/    Intent Router、识别、合成与 Scripted Fallback
-```
-
-所有 Agent 统一读取 `buildContext(state)`，不再各自使用固定用户结论。
-
-## 快速开始
+## 运行
 
 ```bash
 npm install
 npm run dev
 ```
 
-生产与验证：
+验证：
 
 ```bash
 npm run typecheck
-npm run test:v4
+npm run test:v5
 npm run build
-npm run preview
 ```
 
-## Demo 主链路
+## 90 秒 Demo
 
-1. `/onboarding` → Adaptive Onboarding → `/me` Mobility Passport。
-2. Persona B → `/buy` → Scenario Simulator → 3 Cars → True Cost → Deal Checker。
-3. Persona A → `/firsts` → Practice Plan → Rehearsal → Live Drive → Arrival → Familiarity Update。
-4. Persona C → `/trip/roadtrip` → Road Trip Canvas → Journey Memory。
-5. `/help/accident` → 5 步事故处理 → Incident Memory。
+1. 清空 LocalStorage，访问 `/`。
+2. 输入：「我驾照拿了十多年，但是平时很少开。普通市区还行，我最害怕高架和复杂立交。」
+3. 查看 Voice Transcript → Profile Draft → Intelligence Canvas → Agent Mesh。
+4. 回答两个 Adaptive Follow-up，建立 Mobility Passport。
+5. 进入 BUY SMART 修改家充，观察 Ranking updated。
+6. 进入 Route Compare，查看 ME → READY → ROAD 的路线判断与 Memory Write。
 
 ## 安全边界
 
 - FirstDrive 不控制车辆，不参与自动驾驶决策。
 - 驾驶中只呈现必要提醒，复杂操作应在安全停车后继续。
 - 成本为生活成本模拟，不构成金融建议。
-- 事故助手只做安全提示、信息收集和材料整理，不判断责任。
-- 维修翻译不替代专业检测；海外驾驶规则应以当地官方来源为准。
+- 事故助手只做安全提示、信息收集与材料整理，不判断责任。
+- 维修与海外驾驶 Demo 信息不能替代专业检测或当地官方规则。

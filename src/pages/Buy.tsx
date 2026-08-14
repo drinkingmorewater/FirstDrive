@@ -1,7 +1,7 @@
 import { Bookmark, ChevronDown, CircleHelp, Filter, FolderOpen, MoreHorizontal, PlusSquare, Share2, SlidersHorizontal, Sparkles, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { buyAgent } from '../agents'
+import { buyAgent, createTaskGraph, executeTaskGraph } from '../agents'
 import { personaSummaries, vehicles } from '../data/demo'
 import { BuyProfileRail } from '../features/buy/BuyProfileRail'
 import { DealWorkflow, DeliveryWorkflow, UsedCarWorkflow } from '../features/buy/BuyWorkflowPanels'
@@ -25,7 +25,7 @@ const scenarios: Array<{ id: ScenarioId; label: string }> = [
 ]
 
 export function Buy() {
-  const { state, patchBuySession, emitAgentEvent, saveBuyPlan, switchPersona } = useAppState()
+  const { state, patchBuySession, emitAgentEvent, saveBuyPlan, switchPersona, setActiveTaskId } = useAppState()
   const [searchParams, setSearchParams] = useSearchParams()
   const initialTab = searchParams.get('tab') as BuyView | null
   const [view, setView] = useState<BuyView>(tabs.some(tab => tab.id === initialTab) ? initialTab! : 'fit')
@@ -35,7 +35,9 @@ export function Buy() {
   const [ownershipOpen, setOwnershipOpen] = useState(false)
   const [personaOpen, setPersonaOpen] = useState(false)
   const [toast, setToast] = useState('')
+  const [rankingChange, setRankingChange] = useState('')
   const lastAgentRun = useRef('')
+  const lastProfileDecision = useRef('')
 
   const profile = state.user.mobility
   const session = state.buySession
@@ -45,7 +47,20 @@ export function Buy() {
     if (lastAgentRun.current === resultSignature) return
     lastAgentRun.current = resultSignature
     void buyAgent.execute({ state, emit: emitAgentEvent })
+    const task = createTaskGraph('buy', '根据我的最新汽车生活画像重新推荐车型。', state)
+    setActiveTaskId(task.id)
+    void executeTaskGraph(task, emitAgentEvent, { delay: 80 }).finally(() => setActiveTaskId(null))
   }, [emitAgentEvent, resultSignature, state])
+
+  const profileDecisionSignature = `${profile.homeCharging}-${profile.passengerPattern.join(',')}-${profile.purchaseBudget}-${profile.parkingType}`
+  useEffect(() => {
+    if (!lastProfileDecision.current) { lastProfileDecision.current = profileDecisionSignature; return }
+    if (lastProfileDecision.current !== profileDecisionSignature) {
+      const previous = lastProfileDecision.current
+      setRankingChange(previous.split('-')[0] !== String(profile.homeCharging) ? '家庭充电条件改变，能源便利度与车型排序已重新计算。' : '你的生活画像改变，Life Fit 已重新计算。')
+      lastProfileDecision.current = profileDecisionSignature
+    }
+  }, [profile.homeCharging, profile.passengerPattern, profile.purchaseBudget, profile.parkingType, profileDecisionSignature])
 
   useEffect(() => {
     if (!toast) return
@@ -141,7 +156,7 @@ export function Buy() {
 
         <div className={`buy-content ${view}`}>
           {results.length === 0 ? <div className="buy-empty"><Filter /><h2>当前筛选条件没有匹配车型</h2><p>放宽能源或车身条件后继续比较。</p><button onClick={() => patchBuySession({ energyFilter: 'all', bodyFilter: 'all' })}>清除筛选</button></div> : null}
-          {view === 'fit' && results.length ? <><VehicleRanking results={results} selectedId={selected?.vehicle.id ?? ''} onSelect={id => patchBuySession({ selectedVehicleId: id })} /><TcoPanel results={results} selectedId={selected?.vehicle.id ?? ''} assumptions={session.assumptions} onAssumptions={patch => patchBuySession({ assumptions: { ...session.assumptions, ...patch } })} onExport={exportReport} /></> : null}
+          {view === 'fit' && results.length ? <>{rankingChange ? <div className="ranking-updated"><Sparkles /><span><strong>Ranking updated</strong>{rankingChange}</span><button onClick={() => setRankingChange('')}>知道了</button></div> : null}<div className="profile-to-ranking"><small>来自你的哪些信息</small>{[profile.homeCharging ? '有家充' : '无家充', profile.longTripFrequency, profile.passengerPattern.join(' / ') || '主要自己', profile.parkingType, profile.vehiclePriorities[0]].map(item => <span key={item}>{item}</span>)}</div><VehicleRanking results={results} selectedId={selected?.vehicle.id ?? ''} onSelect={id => patchBuySession({ selectedVehicleId: id })} /><TcoPanel results={results} selectedId={selected?.vehicle.id ?? ''} assumptions={session.assumptions} onAssumptions={patch => patchBuySession({ assumptions: { ...session.assumptions, ...patch } })} onExport={exportReport} /></> : null}
           {view === 'tco' && results.length ? <><section className="true-cost-head"><div><small>TRUE COST</small><h2>把车价之外的成本，全部摊开。</h2></div><p>每个数字都标明来源。调整里程、持有年限和停车成本，三辆车会同时重算。</p></section><TcoPanel results={results} selectedId={selected?.vehicle.id ?? ''} editable assumptions={session.assumptions} onAssumptions={patch => patchBuySession({ assumptions: { ...session.assumptions, ...patch } })} onExport={exportReport} /></> : null}
           {view === 'deal' && selected ? <DealWorkflow selected={selected} /> : null}
           {view === 'delivery' && selected ? <DeliveryWorkflow selected={selected} /> : null}

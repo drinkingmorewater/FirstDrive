@@ -15,7 +15,10 @@ export type AssistanceLevel = 'quiet' | 'balanced' | 'guided'
 export type ScenarioId = 'commute' | 'family' | 'roadtrip' | 'rideHailing' | 'camping'
 export type PersonaId = 'practice' | 'buyer' | 'roadtrip'
 export type AgentId = 'me' | 'buy' | 'ready' | 'road' | 'help'
-export type AgentEventStatus = 'queued' | 'running' | 'completed' | 'attention'
+export type AgentEventStatus = 'queued' | 'running' | 'completed' | 'failed' | 'attention'
+export type AgentEventType = 'read_context' | 'tool_call' | 'handoff' | 'memory_read' | 'memory_write' | 'result'
+export type OnboardingStatus = 'new' | 'started' | 'completed'
+export type EvidenceState = 'confirmed' | 'inferred' | 'need_to_confirm'
 
 export interface MobilityProfile {
   city: string
@@ -60,12 +63,67 @@ export type FamiliarityProfile = Record<FamiliarityKey, FamiliarityStatus>
 
 export interface AgentEvent {
   id: string
+  taskId?: string
   agent: AgentId
+  fromAgent?: AgentId | 'orchestrator'
+  toAgent?: AgentId
+  type?: AgentEventType
   status: AgentEventStatus
   title: string
   detail: string
+  inputSummary?: string
+  outputSummary?: string
+  tool?: string
+  memoryKeys?: string[]
   timestamp: number
   source?: string
+}
+
+export interface ProfileEvidence {
+  id: string
+  label: string
+  value: string
+  state: EvidenceState
+  quote?: string
+}
+
+export interface ProfileDraft {
+  transcript: string
+  mobility: Partial<MobilityProfile>
+  familiarity: Partial<FamiliarityProfile>
+  passengerPattern?: string[]
+  evidence: ProfileEvidence[]
+  learned: string[]
+  questions: string[]
+  nextFirst: FamiliarityKey
+  createdAt: string
+}
+
+export interface ProfileIntakeState {
+  transcript: string
+  draft: ProfileDraft | null
+  answers: Record<string, string>
+  confirmed: boolean
+}
+
+export interface TaskNode {
+  id: string
+  agent: AgentId
+  type: AgentEventType
+  label: string
+  detail: string
+  dependencies: string[]
+  tool?: string
+  memoryKeys?: string[]
+}
+
+export interface AgentTask {
+  id: string
+  intent: VoiceIntent
+  input: string
+  requiredContext: string[]
+  nodes: TaskNode[]
+  result: string
 }
 
 export interface Source {
@@ -210,11 +268,50 @@ export interface DriveMemory {
   confidence: number
   person: { learnedPreferences: string[]; lastUpdated: string }
   familiarity: { completedFirsts: string[]; assistanceReductions: number }
-  vehicle: { maintenanceRecords: string[]; deliveryRecords: DeliveryRecord[]; usedCarReports: UsedCarReport[] }
-  journey: { routeChoices: Array<{ mode: string; count: number }>; roadTrips: string[] }
+  vehicle: { maintenanceRecords: string[]; deliveryRecords: DeliveryRecord[]; usedCarReports: UsedCarReport[]; firstDriveCompleted: string[] }
+  journey: { routeChoices: Array<{ mode: string; count: number }>; roadTrips: string[]; roadTripPlans: RoadTripPlan[] }
   cost: { savedPlans: SavedBuyPlan[]; totalTracked: number }
   incident: { records: IncidentRecord[] }
+  rental: { sessions: RentalSession[] }
   timeline: MemoryTimelineEntry[]
+}
+
+export interface RoadTripStop { time: string; place: string; action: string }
+export interface RoadTripDay { day: number; distance: number; title: string; stops: RoadTripStop[] }
+export interface RoadTripPlan {
+  id: string
+  origin: string
+  destination: string
+  departureDate: string
+  vehicle: string
+  passengers: number
+  experience: string
+  goal: string
+  fatiguePreference: string
+  totalDistance: number
+  days: RoadTripDay[]
+  chargingStops: number
+  restStops: number
+  weather: string
+  packing: string[]
+  risks: string[]
+  createdAt: string
+}
+
+export interface RentalSession {
+  id: string
+  vehicle: string
+  location: string
+  pickupMileage: number
+  returnMileage?: number
+  pickupEnergy: number
+  returnEnergy?: number
+  existingDamage: string[]
+  returnDamage?: string[]
+  insuranceConfirmed: boolean
+  documentsConfirmed: boolean
+  status: 'pickup' | 'active' | 'completed'
+  createdAt: string
 }
 
 export interface BuySession {
@@ -292,9 +389,16 @@ export interface LiveDriveContext {
 }
 
 export type VoiceStage = 'idle' | 'listening' | 'understanding' | 'working' | 'speaking'
+export type VoiceIntent =
+  | 'profile_intake' | 'profile_update' | 'buy' | 'trip' | 'practice' | 'navigation'
+  | 'complexity' | 'weather' | 'energy' | 'vehicle' | 'maintenance' | 'help' | 'unknown'
 
 export interface AppState {
-  version: 4
+  version: 5
+  onboardingStatus: OnboardingStatus
+  profileIntake: ProfileIntakeState
+  coachMarksSeen: string[]
+  activeTaskId: string | null
   user: UserProfile
   familiarity: FamiliarityProfile
   vehicle: VehicleProfile

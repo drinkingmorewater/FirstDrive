@@ -18,6 +18,7 @@ import './styles/pages/trip.css'
 import './styles/pages/drive.css'
 import './styles/pages/help.css'
 import './styles/pages/profile.css'
+import './styles/pages/v5.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

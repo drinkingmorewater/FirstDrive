@@ -38,9 +38,6 @@ export function BuyProfileRail() {
 
   return (
     <aside className="buy-profile-rail">
-      <a className="buy-brand" href="/" aria-label="返回 FirstDrive 首页">
-        <strong>First<span>Drive</span></strong><b>第一公里</b><small>AI 汽车生活智能体</small>
-      </a>
       <div className="profile-rail-list">
         {items.map(({ key, label, value, Icon }) => (
           <button key={key} className="profile-rail-item" onClick={() => setEditing(key)} aria-label={`编辑${label}`}>
